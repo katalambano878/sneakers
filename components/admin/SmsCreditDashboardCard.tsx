@@ -1,0 +1,86 @@
+import Link from 'next/link';
+import type { DashboardSmsCredit } from '@/lib/sms-credit-types';
+
+type Props = {
+  smsCredit: DashboardSmsCredit;
+};
+
+const HAS_BUY_PAGE = true;
+
+export function SmsCreditDashboardCard({ smsCredit }: Props) {
+  const blinkLow = smsCredit.status === 'ok' && smsCredit.level === 'low';
+  const blinkEmpty = smsCredit.status === 'ok' && smsCredit.level === 'empty';
+
+  const borderClass =
+    smsCredit.status === 'ok' && smsCredit.level === 'empty'
+      ? 'border-red-300'
+      : smsCredit.status === 'ok' && smsCredit.level === 'low'
+        ? 'border-amber-300'
+        : 'border-emerald-50';
+
+  const iconWrap =
+    smsCredit.status === 'ok' && smsCredit.level === 'empty'
+      ? 'bg-red-50 text-red-600 border-red-100'
+      : smsCredit.status === 'ok' && smsCredit.level === 'low'
+        ? 'bg-amber-50 text-amber-600 border-amber-100'
+        : 'bg-emerald-50 text-emerald-600 border-emerald-100';
+
+  let mainValue: string;
+  let subline: string | null = null;
+
+  if (smsCredit.status === 'not_connected') {
+    mainValue = 'SMS is not connected';
+  } else if (smsCredit.status === 'load_failed') {
+    mainValue = '—';
+    subline = 'The balance could not be loaded';
+  } else {
+    mainValue = smsCredit.sms_left.toLocaleString('en-GH');
+    if (smsCredit.level === 'low') {
+      subline = 'Running low, top up soon';
+    } else if (smsCredit.level === 'empty') {
+      subline = 'SMS credit is empty, texts are not being sent';
+    } else {
+      subline = 'texts left';
+    }
+  }
+
+  const sublineClass =
+    smsCredit.status === 'ok' && smsCredit.level === 'empty'
+      ? 'text-red-700 font-medium'
+      : smsCredit.status === 'ok' && smsCredit.level === 'low'
+        ? 'text-amber-700 font-medium'
+        : 'text-gray-600';
+
+  const showTopUp = HAS_BUY_PAGE && smsCredit.status !== 'not_connected';
+
+  return (
+    <div
+      className={`relative overflow-hidden bg-white rounded-2xl shadow-sm border p-6 hover:shadow-md transition-all duration-200 ${borderClass} ${
+        blinkEmpty ? 'sms-credit-double-blink-empty' : blinkLow ? 'sms-credit-double-blink' : ''
+      }`}
+    >
+      <div className="flex items-center justify-between mb-4">
+        <div className={`w-12 h-12 flex items-center justify-center rounded-xl border ${iconWrap}`}>
+          <i className="ri-message-2-line text-2xl" aria-hidden />
+        </div>
+        {showTopUp ? (
+          <Link
+            href="/admin/sms-credit"
+            className="inline-flex items-center justify-center px-3 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-xl hover:bg-emerald-700 transition-colors"
+          >
+            Top up
+          </Link>
+        ) : null}
+      </div>
+      <h3
+        className={`font-bold text-gray-900 mb-1 tabular-nums ${
+          smsCredit.status === 'not_connected' ? 'text-base leading-snug' : 'text-2xl'
+        }`}
+      >
+        {mainValue}
+      </h3>
+      <p className="text-gray-600 text-sm">SMS credit</p>
+      {subline ? <p className={`mt-2 text-sm ${sublineClass}`}>{subline}</p> : null}
+    </div>
+  );
+}
